@@ -85,7 +85,21 @@ if is_admin:
     if filter_name != "ALL":
         view_df = view_df[view_df["Name"] == filter_name]
     st.dataframe(view_df)
-    st.download_button("📥 Download Today's Report", data=view_df.to_csv(index=False), file_name="today_attendance.csv", mime="text/csv")
+
+    if filter_name != "ALL":
+        csv_data = view_df.to_csv(index=False)
+        st.download_button(
+            label=f"📥 Download {filter_name}'s Attendance",
+            data=csv_data,
+            file_name=f"{filter_name}_attendance.csv",
+            mime="text/csv"
+        )
+    else:
+        st.download_button("📥 Download All Attendance",
+            data=view_df.to_csv(index=False),
+            file_name="today_attendance.csv",
+            mime="text/csv"
+        )
     st.stop()
 
 # Staff validation
