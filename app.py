@@ -7,8 +7,8 @@ import os
 import math
 
 # CONFIGURATION
-office_lat = 22.957421768359637
-office_lon = 72.65552843722682
+office_lat = 23.010455037590273
+office_lon = 72.62062765767143
 allowed_distance = 100
 employees = ["CASHENAL", "SUJAL", "CAHEENA", "SONALI", "SHEFALI", "SAPNA"]
 admin_key = "CASHENAL"
