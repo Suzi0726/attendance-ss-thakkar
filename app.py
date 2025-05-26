@@ -15,40 +15,46 @@ admin_key = "CASHENAL"
 st.set_page_config(page_title="S S Thakkar & Co. Attendance", layout="centered")
 st.title("🧾 S S THAKKAR & CO. ATTENDANCE")
 
-# Admin or Staff Mode
 query_params = st.query_params
 is_admin = query_params.get("admin", "") == admin_key
 staff_name = query_params.get("staff", "").upper() if not is_admin else ""
 
-# GPS input field
-gps = st.text_input("GPS", key="gps-data")
+# GPS output area
+st.markdown("### 📍 Click below to share your location")
+clicked = st.button("📍 Share My Location")
 
-components.html("""
-<script>
-navigator.geolocation.getCurrentPosition(function(position) {
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
-    const coords = lat + "," + lon;
-    const input = window.parent.document.querySelector('input[id="gps-data"]');
-    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-    nativeInputValueSetter.call(input, coords);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-});
-</script>
-""", height=0)
+# JS injection will only trigger when button is clicked
+if clicked:
+    components.html("""
+    <script>
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const coords = lat + "," + lon;
+        const input = window.parent.document.querySelector('input[id="gps-data"]');
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        nativeInputValueSetter.call(input, coords);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    </script>
+    """, height=0)
 
-# Location parsing
+# Hidden field that JS writes into
+gps = st.text_input("Current Location", key="gps-data", label_visibility="collapsed")
+
+# Check and parse GPS
 if gps:
     try:
         user_lat, user_lon = map(float, gps.split(","))
+        st.success(f"📍 Location Shared: {user_lat:.5f}, {user_lon:.5f}")
     except:
-        st.error("Failed to parse GPS.")
+        st.error("Failed to detect valid GPS coordinates.")
         st.stop()
 else:
-    st.warning("📍 Click 'Share My Location' to continue.")
+    st.info("Waiting for location... Click the button above.")
     st.stop()
 
-# Haversine distance
+# Calculate distance
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371000
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
@@ -60,7 +66,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
 distance = haversine(user_lat, user_lon, office_lat, office_lon)
 
-# Attendance logging
+# Load and save attendance
 log_file = "attendance_log.xlsx"
 photo_folder = "photos"
 os.makedirs(photo_folder, exist_ok=True)
@@ -85,31 +91,25 @@ if is_admin:
     if filter_name != "ALL":
         view_df = view_df[view_df["Name"] == filter_name]
     st.dataframe(view_df)
-
-    if filter_name != "ALL":
-        csv_data = view_df.to_csv(index=False)
-        st.download_button(
-            label=f"📥 Download {filter_name}'s Attendance",
-            data=csv_data,
-            file_name=f"{filter_name}_attendance.csv",
-            mime="text/csv"
-        )
-    else:
-        st.download_button("📥 Download All Attendance",
-            data=view_df.to_csv(index=False),
-            file_name="today_attendance.csv",
-            mime="text/csv"
-        )
+    csv_data = view_df.to_csv(index=False)
+    file_name = f"{filter_name}_attendance.csv" if filter_name != "ALL" else "today_attendance.csv"
+    st.download_button("📥 Download", data=csv_data, file_name=file_name, mime="text/csv")
     st.stop()
 
-# Staff validation
+# Validate employee
 if staff_name not in employees:
     st.error("Invalid or missing staff link.")
     st.stop()
 
+# Show staff view
 st.subheader(f"👋 Welcome, {staff_name}")
 st.info(f"📏 Distance from office: {int(distance)} meters")
 
+if distance > allowed_distance:
+    st.error("❌ You are outside the 100 meter office boundary.")
+    st.stop()
+
+# Check today's attendance
 today_str = datetime.now().strftime("%Y-%m-%d")
 records_today = df[(df["Name"] == staff_name) & (df["Time"].astype(str).str.startswith(today_str))]
 punch_in_done = any(records_today["Action"] == "Punch In")
@@ -119,16 +119,11 @@ if punch_in_done:
     st.success("✅ You already punched in today.")
 if punch_out_done:
     st.success("✅ You already punched out today.")
-
-if distance > allowed_distance:
-    st.error("❌ You are outside the 100 meter office boundary.")
-    st.stop()
-
 if punch_in_done and punch_out_done:
     st.warning("✔️ You have completed both actions for today.")
     st.stop()
 
-# Punch form
+# Attendance form
 with st.form("attendance_form"):
     st.success("📍 Location verified.")
     action = st.radio("Select Action:", ["Punch In", "Punch Out"], disabled=(punch_in_done, punch_out_done))
