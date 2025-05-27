@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        a { text-decoration: none; color: white; background-color: teal; padding: 8px 16px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Admin Dashboard</h2>
+    <a href="/download">⬇️ Download Excel</a>
+    <table>
+        <tr>
+            <th>Name</th><th>Date</th><th>Time</th><th>Type</th><th>Lat</th><th>Lng</th><th>Photo</th>
+        </tr>
+        {% for r in records %}
+        <tr>
+            <td>{{ r[0] }}</td>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
+            <td>{{ r[3] }}</td>
+            <td>{{ r[4] }}</td>
+            <td>{{ r[5] }}</td>
+            <td><a href="/{{ r[6] }}" target="_blank">📷 View</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
