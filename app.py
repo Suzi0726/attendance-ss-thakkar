@@ -7,7 +7,7 @@ import base64
 from PIL import Image
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Replace with a secure key for production
+app.secret_key = 'your_secret_key'
 
 # Constants
 OFFICE_LAT = 22.957531430064837
@@ -40,7 +40,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 def attendance(name):
     name_upper = name.upper()
     if name_upper not in EMPLOYEES:
-        return "❌ Unauthorized User", 403
+        return "Unauthorized User", 403
     return render_template("employee.html", name=name_upper)
 
 # Punch route
@@ -57,7 +57,7 @@ def punch():
 
     distance = calculate_distance(lat, lng, OFFICE_LAT, OFFICE_LNG)
     if distance > ALLOWED_DISTANCE:
-        return "❌ You are not within 100 meters of the office.", 400
+        return "You are not within 100 meters of the office.", 400
 
     # Decode and save photo
     os.makedirs('photos', exist_ok=True)
@@ -73,7 +73,7 @@ def punch():
     # Check for duplicate punch
     for row in ws.iter_rows(min_row=2, values_only=True):
         if row[0] == name and row[1] == date_str and row[3] == punch_type:
-            return f⚠️ Already punched {punch_type} today.", 400
+            return f"Already punched {punch_type} today.", 400
 
     ws.append([name, date_str, time_str, punch_type, lat, lng, img_filename])
     wb.save(EXCEL_FILE)
@@ -88,7 +88,7 @@ def admin():
             session['admin'] = True
             return redirect(url_for('dashboard'))
         else:
-            return "❌ Access Denied", 403
+            return "Access Denied", 403
     return render_template("admin_login.html")
 
 # Admin dashboard
@@ -108,7 +108,7 @@ def download():
         return redirect(url_for('admin'))
     return send_file(EXCEL_FILE, as_attachment=True)
 
-# ✅ Correct Render deployment binding
+# ✅ Required for Render
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
